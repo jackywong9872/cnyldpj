@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>蓮蓮歡樂二零二六之新春你最紅🧧🔥（直播同步版｜手動開始）</title>
+  <style>
+    body { font-family: 'PingFang HK','Microsoft JhengHei',sans-serif; background-color:#fce4ec; text-align:center; padding:20px; color:#333; overflow-x:hidden; }
+    canvas { position: fixed; top:0; left:0; pointer-events:none; z-index:999; }
+    .container { max-width:520px; margin:auto; background:rgba(255,255,255,0.95); padding:22px; border-radius:20px; box-shadow:0 10px 25px rgba(0,0,0,0.15); border:2px solid #d32f2f; position:relative; z-index:10; }
+    h1 { color:#d32f2f; font-size:22px; margin-bottom:10px; line-height:1.4; }
+    .status-info { background:#fff3e0; padding:10px; border-radius:10px; margin-bottom:12px; font-size:15px; color:#e65100; font-weight:bold; display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; }
+    .badge { font-weight:700; color:#444; background:#fff; border:1px solid #eee; padding:4px 10px; border-radius:999px; }
+    textarea { width:100%; height:105px; padding:10px; border:2px solid #ddd; border-radius:8px; font-size:14px; box-sizing:border-box; margin-bottom:10px; resize:none; }
+    .btn { padding:12px 16px; cursor:pointer; background-color:#d32f2f; color:white; border:none; border-radius:10px; font-weight:bold; font-size:16px; transition:0.2s; margin:6px 0; width:100%; }
+    .btn:hover { background-color:#b71c1c; transform: scale(1.01); }
+    .btn:disabled { opacity:0.55; cursor:not-allowed; transform:none; }
+    .btn-green { background-color:#4caf50; }
+    .btn-orange { background-color:#ff9800; }
+    .btn-ghost { background:#fff; color:#d32f2f; border:2px solid #d32f2f; }
+
+    .row { display:flex; gap:10px; }
+    .row .btn { width:50%; margin:6px 0; }
+
+    #participant-display { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 0 6px; min-height:40px; }
+    .name-tag { color:white; padding:6px 14px; border-radius:20px; font-size:14px; font-weight:bold; animation:pop 0.25s ease; box-shadow:0 2px 5px rgba(0,0,0,0.12); }
+    @keyframes pop { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
+
+    #lottery-phase { display:none; margin-top:14px; padding:16px; border:2px solid #ffd700; border-radius:15px; background:#fff9c4; }
+    .current-name { font-size:24px; font-weight:bold; color:#d32f2f; margin-bottom:12px; }
+    .envelope-box { font-size:78px; font-weight:bold; color:#d32f2f; margin:16px 0; min-height:110px; background:#fff; border-radius:15px; line-height:110px; border:4px solid #d32f2f; user-select:none; }
+
+    #results { margin-top:14px; text-align:left; border-top:2px solid rgba(0,0,0,0.08); max-height:290px; overflow-y:auto; }
+    .result-item { padding:10px 10px; border-bottom:1px solid rgba(0,0,0,0.08); display:flex; justify-content:space-between; font-size:17px; background:rgba(255,255,255,0.6); gap:12px; }
+    .number-tag { font-weight:bold; color:#d32f2f; background:#fff; padding:2px 10px; border-radius:8px; border:2px solid #d32f2f; white-space:nowrap; }
+
+    .hint { font-size:13px; color:#666; margin-top:6px; line-height:1.45; text-align:left; }
+    .small { font-size:12px; color:#777; }
+    .divider { height:1px; background:rgba(0,0,0,0.08); margin:10px 0; }
+    .error { color:#b71c1c; font-weight:700; background:#ffebee; border:1px solid #ffcdd2; padding:8px 10px; border-radius:10px; text-align:left; display:none; }
+    .ok { color:#1b5e20; font-weight:700; background:#e8f5e9; border:1px solid #c8e6c9; padding:8px 10px; border-radius:10px; text-align:left; display:none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .done-box { display:none; padding:12px; border-radius:12px; background:#e8f5e9; border:1px solid #c8e6c9; color:#1b5e20; font-weight:800; }
+    .done-sub { font-size:12px; color:#2e7d32; font-weight:600; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <canvas id="fireworks"></canvas>
+
+  <div class="container">
+    <h1>蓮蓮歡樂二零二六<br/>之新春你最紅🧧🔥<span class="small">（直播同步版｜手動開始）</span></h1>
+
+    <div class="status-info">
+      <div>📢 目前名單人數：<span id="count">0</span></div>
+      <div class="badge">房間：<span id="roomLabel" class="mono"></span></div>
+    </div>
+
+    <div class="error" id="errBox"></div>
+    <div class="ok" id="okBox"></div>
+
+    <div class="row">
+      <button class="btn btn-orange" id="beHostBtn">我係主持（控制抽籤）</button>
+      <button class="btn btn-green" id="beViewerBtn">我係觀眾（同步直播）</button>
+    </div>
+
+    <div class="hint">
+      <div><strong>用法：</strong>主持 → 貼名單 → 生成名單 → <strong>手動開始</strong> → 逐個揭曉；觀眾只要開同一條連結就會同步畫面。</div>
+      <div class="small">連結可用 <span class="mono">?room=xxx</span> 分開不同場次，例如：<span class="mono">.../index.html?room=lianlian2026</span></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div id="setup-phase" style="display:none;">
+      <textarea id="bulkInput" placeholder="主持：在此貼入名單（用空格/換行/逗號分隔）..."></textarea>
+      <button class="btn btn-orange" id="genBtn">生成隨機順序名單</button>
+      <div id="participant-display"></div>
+      <button class="btn btn-green" id="startBtn" style="display:none;">手動開始開彩 🔥（不限 19 人）</button>
+      <button class="btn btn-ghost" id="resetBtn">重置本房間（清空結果/回到 setup）</button>
+    </div>
+
+    <div id="lottery-phase">
+      <!-- FIX: never replace innerHTML of controls; we toggle visibility instead -->
+      <div id="doneBox" class="done-box">
+        🎉 抽籤完成！
+        <div class="done-sub">主持可按「重置本房間」再開下一Round（可用同一份名單）。</div>
+      </div>
+
+      <div id="draw-controls">
+        <div class="current-name" id="nowDrawing"></div>
+        <div class="envelope-box" id="envNumber">?</div>
+        <button class="btn" id="revealBtn">揭曉編號 🧧</button>
+        <button class="btn btn-green" id="nextBtn" style="display:none;">下一位 ➔</button>
+      </div>
+      <div id="results"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore, doc, setDoc, updateDoc, onSnapshot, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // Replace with your Firebase web config for real-time sync:
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const show = (el, yes) => { el.style.display = yes ? "block" : "none"; };
+
+    function setMsg(type, text) {
+      const err = $("errBox"), ok = $("okBox");
+      if (type === "error") {
+        ok.style.display = "none";
+        err.textContent = text;
+        err.style.display = "block";
+      } else if (type === "ok") {
+        err.style.display = "none";
+        ok.textContent = text;
+        ok.style.display = "block";
+      } else {
+        err.style.display = "none";
+        ok.style.display = "none";
+      }
+    }
+
+    const params = new URLSearchParams(location.search);
+    const room = params.get("room") || "default";
+    $("roomLabel").textContent = room;
+
+    const colors = ['#e91e63','#9c27b0','#673ab7','#3f51b5','#2196f3','#009688','#4caf50','#ff9800','#ff5722','#795548','#d32f2f'];
+
+    let role = "viewer"; // "host" | "viewer"
+    let localState = null;
+    let lastFiredAt = null;
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function renderNameTags(names) {
+      const display = $("participant-display");
+      display.innerHTML = '';
+      (names || []).forEach(name => {
+        const tag = document.createElement('span');
+        tag.className = 'name-tag';
+        tag.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        tag.innerText = name;
+        display.appendChild(tag);
+      });
+    }
+
+    function renderResults(results) {
+      const el = $("results");
+      el.innerHTML = "";
+      const arr = (results || []);
+      arr.slice().reverse().forEach((r, idxFromEnd) => {
+        const item = document.createElement("div");
+        item.className = "result-item";
+        item.innerHTML = `<span><strong>${(arr.length - idxFromEnd)}.</strong> ${r.name}</span><span class="number-tag">${r.number} 號</span>`;
+        el.appendChild(item);
+      });
+    }
+
+    function showSetup(yes) { show($("setup-phase"), yes); }
+    function showLottery(yes) { show($("lottery-phase"), yes); }
+
+    function applySnapshot(data) {
+      localState = data || {};
+      const names = localState.names || [];
+      const results = localState.results || [];
+      const phase = localState.phase || "setup";
+      const currentIndex = localState.currentIndex ?? 0;
+      const reveal = localState.reveal || { status: "hidden", number: null, firedAt: null };
+
+      $("count").textContent = names.length;
+
+      if (phase === "setup") {
+        showSetup(role === "host");
+        showLottery(false);
+        renderNameTags(names);
+        $("startBtn").style.display = (role === "host" && names.length >= 1) ? "block" : "none";
+        setMsg(null, "");
+        return;
+      }
+
+      // lottery / done
+      showSetup(false);
+      showLottery(true);
+      renderResults(results);
+
+      const drawControls = $("draw-controls");
+      const doneBox = $("doneBox");
+      const nowDrawing = $("nowDrawing");
+      const envNumber = $("envNumber");
+      const revealBtn = $("revealBtn");
+      const nextBtn = $("nextBtn");
+
+      // FIX: toggle done UI instead of destroying buttons/DOM
+      const isDone = (phase === "done") || (currentIndex >= names.length);
+      show(doneBox, isDone);
+      show(drawControls, !isDone);
+
+      if (isDone) return;
+
+      nowDrawing.textContent = `請 ${names[currentIndex]} 抽籤`;
+      envNumber.textContent = reveal.status === "revealed" ? reveal.number : "?";
+
+      if (role === "host") {
+        revealBtn.style.display = (reveal.status === "hidden") ? "block" : "none";
+        nextBtn.style.display = (reveal.status === "revealed") ? "block" : "none";
+      } else {
+        revealBtn.style.display = "none";
+        nextBtn.style.display = "none";
+      }
+    }
+
+    // Fireworks
+    const canvas = $("fireworks");
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+
+    class Particle {
+      constructor(x, y, color) {
+        this.x = x; this.y = y; this.color = color;
+        this.velocity = { x: (Math.random() - 0.5) * 10, y: (Math.random() - 0.5) * 10 };
+        this.alpha = 1; this.friction = 0.95;
+      }
+      draw() {
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+      update() {
+        this.velocity.x *= this.friction;
+        this.velocity.y *= this.friction;
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        this.alpha -= 0.015;
+      }
+    }
+
+    function createFirework() {
+      const x = window.innerWidth / 2;
+      const y = window.innerHeight / 2;
+      for (let i = 0; i < 80; i++) {
+        particles.push(new Particle(x, y, colors[Math.floor(Math.random() * colors.length)]));
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        if (p.alpha > 0) { p.update(); p.draw(); }
+        else { particles.splice(i, 1); }
+      }
+    }
+    animate();
+
+    // Firebase init
+    let db, roomRef;
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      roomRef = doc(db, "luckyRooms", room);
+    } catch (e) {
+      setMsg("error", "Firebase 初始化失敗：請填好 firebaseConfig（apiKey / authDomain / projectId）。");
+    }
+
+    async function ensureRoomInitialized() {
+      if (!roomRef) return;
+      await setDoc(roomRef, {
+        phase: "setup",
+        names: [],
+        envelopePool: [],
+        currentIndex: 0,
+        results: [],
+        reveal: { status: "hidden", number: null, firedAt: null },
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
+
+    // Subscribe
+    if (roomRef) {
+      onSnapshot(roomRef, (snap) => {
+        const data = snap.exists() ? snap.data() : null;
+        applySnapshot(data);
+
+        const firedAt = data?.reveal?.firedAt || null;
+        if (firedAt && firedAt !== lastFiredAt) {
+          lastFiredAt = firedAt;
+          createFirework();
+        }
+      }, (err) => {
+        setMsg("error", "讀取直播資料失敗（Firestore 權限/設定問題）。請檢查 Firestore rules 及網域設定。");
+        console.error(err);
+      });
+    }
+
+    // Roles
+    $("beHostBtn").onclick = async () => {
+      role = "host";
+      showSetup(true);
+      setMsg("ok", "已切換為主持。請貼入名單並生成，之後手動開始。");
+      await ensureRoomInitialized();
+    };
+
+    $("beViewerBtn").onclick = async () => {
+      role = "viewer";
+      showSetup(false);
+      showLottery(true);
+      setMsg("ok", "已切換為觀眾：會自動同步主持抽籤。");
+    };
+
+    // Helper: start lottery (envelope pool size equals names count)
+    async function startLotteryFromCurrentNames() {
+      const names = localState?.names || [];
+      if (names.length < 1) {
+        setMsg("error", "名單至少要有 1 人先可以開始。");
+        return;
+      }
+
+      const envelopePool = Array.from({ length: names.length }, (_, i) => i + 1);
+      shuffleArray(envelopePool);
+
+      await updateDoc(roomRef, {
+        phase: "lottery",
+        envelopePool,
+        currentIndex: 0,
+        results: [],
+        reveal: { status: "hidden", number: null, firedAt: null },
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    // Host actions
+    $("genBtn").onclick = async () => {
+      if (role !== "host") return;
+      if (!roomRef) return setMsg("error", "未設定 Firebase，無法同步。");
+
+      const input = $("bulkInput").value;
+      const rawNames = input.split(/[\s\n,]+/).filter(n => n.trim() !== "");
+      const uniqueNames = [...new Set(rawNames)];
+      if (uniqueNames.length === 0) return setMsg("error", "請先貼入名單。");
+
+      shuffleArray(uniqueNames);
+
+      await updateDoc(roomRef, {
+        phase: "setup",
+        names: uniqueNames,
+        // keep currentIndex/results/reveal reset for clean re-run
+        currentIndex: 0,
+        results: [],
+        envelopePool: [],
+        reveal: { status: "hidden", number: null, firedAt: null },
+        updatedAt: serverTimestamp()
+      });
+
+      setMsg("ok", `名單已打亂（共 ${uniqueNames.length} 人）。你可以按「手動開始開彩」。`);
+    };
+
+    $("startBtn").onclick = async () => {
+      if (role !== "host") return;
+      if (!roomRef) return setMsg("error", "未設定 Firebase，無法同步。");
+      await startLotteryFromCurrentNames();
+      setMsg("ok", "已進入抽籤階段。");
+    };
+
+    $("revealBtn").onclick = async () => {
+      if (role !== "host") return;
+      if (!roomRef) return setMsg("error", "未設定 Firebase，無法同步。");
+
+      const names = localState?.names || [];
+      const envelopePool = localState?.envelopePool || [];
+      const currentIndex = localState?.currentIndex ?? 0;
+      const results = localState?.results || [];
+
+      if (currentIndex >= names.length) return;
+      const number = envelopePool[currentIndex];
+      const name = names[currentIndex];
+
+      await updateDoc(roomRef, {
+        results: [...results, { name, number }],
+        reveal: { status: "revealed", number, firedAt: Date.now() },
+        updatedAt: serverTimestamp()
+      });
+    };
+
+    $("nextBtn").onclick = async () => {
+      if (role !== "host") return;
+      if (!roomRef) return setMsg("error", "未設定 Firebase，無法同步。");
+
+      const names = localState?.names || [];
+      const currentIndex = localState?.currentIndex ?? 0;
+      const nextIndex = currentIndex + 1;
+
+      await updateDoc(roomRef, {
+        currentIndex: nextIndex,
+        reveal: { status: "hidden", number: null, firedAt: null },
+        phase: (nextIndex >= names.length) ? "done" : "lottery",
+        updatedAt: serverTimestamp()
+      });
+    };
+
+    // FIXED RESET:
+    // - resets round state but keeps the SAME list of ppl (names) by default
+    $("resetBtn").onclick = async () => {
+      if (role !== "host") return;
+      if (!roomRef) return setMsg("error", "未設定 Firebase，無法同步。");
+
+      const keepNames = (localState?.names || []);
+      if (keepNames.length === 0) {
+        if (!confirm("名單目前為空。仍然要重置嗎？")) return;
+      } else {
+        if (!confirm("確定要開新一Round？（會清空結果，但保留同一份名單）")) return;
+      }
+
+      await updateDoc(roomRef, {
+        phase: "setup",
+        // keep names as-is
+        names: keepNames,
+        envelopePool: [],
+        currentIndex: 0,
+        results: [],
+        reveal: { status: "hidden", number: null, firedAt: null },
+        updatedAt: serverTimestamp()
+      });
+
+      setMsg("ok", keepNames.length ? "已重置：保留名單，已清空結果，可以再開始。" : "已重置：目前無名單。");
+    };
+  </script>
+</body>
+</html>
